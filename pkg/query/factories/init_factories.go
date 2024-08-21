@@ -7,6 +7,7 @@ import (
 	"github.com/benchant/tsbs/cmd/tsbs_generate_queries/databases/cratedb"
 	"github.com/benchant/tsbs/cmd/tsbs_generate_queries/databases/influx"
 	"github.com/benchant/tsbs/cmd/tsbs_generate_queries/databases/iotdb"
+	"github.com/benchant/tsbs/cmd/tsbs_generate_queries/databases/kaiwudb"
 	"github.com/benchant/tsbs/cmd/tsbs_generate_queries/databases/mongo"
 	"github.com/benchant/tsbs/cmd/tsbs_generate_queries/databases/questdb"
 	"github.com/benchant/tsbs/cmd/tsbs_generate_queries/databases/siridb"
@@ -43,6 +44,18 @@ func InitQueryFactories(config *config.QueryGeneratorConfig) map[string]interfac
 	factories[constants.FormatIoTDB] = &iotdb.BaseGenerator{
 		BasicPath:      "root",
 		BasicPathLevel: 0,
+	}
+	if config.Format == constants.FormatKaiwuDB {
+		if config.Use == "cpu-only" {
+			factories[constants.FormatKaiwuDB] = &kaiwudb.BaseGenerator{
+				CPUDBName: config.DbName,
+			}
+		} else if config.Use == "iot" {
+			factories[constants.FormatKaiwuDB] = &kaiwudb.BaseGenerator{
+				ReadingDBName:     config.DbName,
+				DiagnosticsDBName: config.DbName,
+			}
+		}
 	}
 	return factories
 }

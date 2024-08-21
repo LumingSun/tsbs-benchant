@@ -18,12 +18,14 @@ require (
 	github.com/google/flatbuffers v1.11.0
 	github.com/google/go-cmp v0.5.2
 	github.com/jackc/pgx/v4 v4.8.0
+	github.com/jackc/pgx/v5 v5.6.0
 	github.com/jmoiron/sqlx v1.2.1-0.20190826204134-d7d95172beb5
 	github.com/kshvakov/clickhouse v1.3.11
 	github.com/lib/pq v1.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/common v0.13.0
 	github.com/shirou/gopsutil v3.21.3+incompatible
+	github.com/silenceper/pool v1.0.0
 	github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
@@ -33,7 +35,7 @@ require (
 	github.com/valyala/fasthttp v1.15.1
 	go.mongodb.org/mongo-driver v1.4.6
 	go.uber.org/atomic v1.6.0
-	golang.org/x/net v0.0.0-20200904194848-62affa334b73
+	golang.org/x/net v0.10.0
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
 	gopkg.in/yaml.v2 v2.3.0
 )
