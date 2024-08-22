@@ -196,6 +196,7 @@ func (p *processorInsert) ProcessBatch(b targets.Batch, doLoad bool) (metricCoun
 	/** type 1 sample:
 	 * 1,cpu,host_0,11,(1451606400000,58,2,24,61,22,63,6,44,80,38,'host_0')
 	 */
+	header := false
 	for name, sqls := range batches.m {
 		tableName := strings.Split(name, ":")[0]
 		v, ok := GlobalTable.Load(tableName)
@@ -206,23 +207,26 @@ func (p *processorInsert) ProcessBatch(b targets.Batch, doLoad bool) (metricCoun
 		cols := v.(string)
 
 		rowCnt += uint64(len(sqls))
-		p.buf.WriteString("insert into ")
-		p.buf.WriteString(tableName + cols)
-		p.buf.WriteString(" values")
+		if !header {
+			p.buf.WriteString("insert into ")
+			p.buf.WriteString(tableName + cols)
+			p.buf.WriteString(" values")
+			header = true
+		}
+
 		for i := 0; i < len(sqls); i++ {
 			p.buf.WriteString(sqls[i])
-			if i < len(sqls)-1 {
-				p.buf.WriteString(" , ")
-			}
+			p.buf.WriteString(" , ")
 		}
-		sql := p.buf.String()
-		// fmt.Println(sql)
-		_, err := p._db.Connection.Exec(context.Background(), sql)
-		if err != nil {
-			panic(fmt.Sprintf("kaiwudb insert data failed,err :%s", err))
-		}
-		p.buf.Reset()
 	}
+	sql := p.buf.String()
+	// fmt.Println(sql)
+	_, err := p._db.Connection.Exec(context.Background(), sql)
+	if err != nil {
+		panic(fmt.Sprintf("kaiwudb insert data failed,err :%s", err))
+	}
+	p.buf.Reset()
+	// }
 
 	batches.Reset()
 	return metricCnt, rowCnt
