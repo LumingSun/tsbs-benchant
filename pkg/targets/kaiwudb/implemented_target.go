@@ -26,7 +26,6 @@ func (t *kaiwudbTarget) TargetSpecificFlags(flagPrefix string, flagSet *pflag.Fl
 	flagSet.String(flagPrefix+"dbname", "benchmark", "KaiwuDB db name")
 	flagSet.String(flagPrefix+"insert-type", "9091", "KaiwuDB insert type")
 	flagSet.String(flagPrefix+"case", "iot", "KaiwuDB use-case")
-	flagSet.Int(flagPrefix+"preparesize", 1728, "Prepare batch size : Please set to an integer multiple of 864")
 }
 
 func (t *kaiwudbTarget) TargetName() string {

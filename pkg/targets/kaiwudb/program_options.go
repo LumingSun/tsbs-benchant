@@ -10,5 +10,4 @@ type LoadingOptions struct {
 	Case        string
 	Workers     int
 	DoCreate    bool
-	Preparesize int
 }

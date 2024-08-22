@@ -31,13 +31,12 @@ func initProgramOptions() (*kaiwudb.LoadingOptions, load.BenchmarkRunner, *load.
 	viper.SetTypeByDefaultValue(true)
 	opts.User = viper.GetString("user")
 	opts.Pass = viper.GetString("pass")
-	opts.Host = viper.GetStringSlice("mehost")
-	opts.Port = viper.GetIntSlice("meport")
+	opts.Host = viper.GetStringSlice("host")
+	opts.Port = viper.GetIntSlice("port")
 	opts.DBName = viper.GetString("db-name")
 	opts.Case = viper.GetString("case")
 	opts.Workers = viper.GetInt("workers")
 	opts.DoCreate = viper.GetBool("do-create-db")
-	opts.Preparesize = viper.GetInt("preparesize")
 	//todo: kaiwudb连接可配参数
 	loaderConf.HashWorkers = true
 	loaderConf.NoFlowControl = true
