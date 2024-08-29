@@ -213,20 +213,20 @@ func (s *Serializer) Serialize(p *data.Point, w io.Writer) error {
 		s.superTable[superTable] = table
 	}
 	_, exist = s.tableMap[subTable]
-	var repeatFieldValues []string
+	// var repeatFieldValues []string
 	// TODO: not sure here
-	column := len(fieldValues)
-	for i := 0; i < column/10; i++ {
-		repeatFieldValues = append(repeatFieldValues, fieldValues...)
-	}
+	// column := len(fieldValues)
+	// for i := 0; i < column/10; i++ {
+	// 	repeatFieldValues = append(repeatFieldValues, fieldValues...)
+	// }
 	if !exist {
-		fmt.Fprintf(w, "%c,%s,%s,(%d,%s,%s)\n", InsertMetricAndTag, superTable, subTable, p.TimestampInUnixMs(), strings.Join(repeatFieldValues, ","), strings.Join(tagValues, ","))
+		fmt.Fprintf(w, "%c,%s,%s,(%d,%s,%s)\n", InsertMetricAndTag, superTable, subTable, p.TimestampInUnixMs(), strings.Join(fieldValues, ","), strings.Join(tagValues, ","))
 		// fmt.Fprintf(w, "%c,%s,%s,tags (%s)\n", CreateTable, superTable, subTable, strings.Join(tagValues, ","))
 		//fmt.Fprintf(w, "%c,%s,%s,(%s)values(%s)\n", InsertAttribute, superTable, subTable, trimString(s.superTable[superTable].tagsStr, '`'), strings.Join(tagValues, ","))
 		s.tableMap[subTable] = nothing
 	}
 
-	fmt.Fprintf(w, "%c,%s,%s,%d,(%d,%s,%s)\n", InsertMetric, superTable, subTable, len(repeatFieldValues), p.TimestampInUnixMs(), strings.Join(repeatFieldValues, ","), tagValues[0])
+	fmt.Fprintf(w, "%c,%s,%s,%d,(%d,%s,%s)\n", InsertMetric, superTable, subTable, len(fieldValues), p.TimestampInUnixMs(), strings.Join(fieldValues, ","), tagValues[0])
 	return nil
 }
 
