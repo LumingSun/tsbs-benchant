@@ -199,11 +199,29 @@ func (p *processorInsert) ProcessBatch(b targets.Batch, doLoad bool) (metricCoun
 	header := false
 	for name, sqls := range batches.m {
 		tableName := strings.Split(name, ":")[0]
+		p.wg.Add(1)
+		go func() {
+			defer p.wg.Done()
+			v, ok := GlobalTable.Load(tableName)
+			if !ok {
+				v, ok = p.sci.m.Load(tableName)
+				if ok {
+					<-v.(*Ctx).c.Done()
+				}
+				c, cancel := context.WithCancel(context.Background())
+				ctx := &Ctx{
+					c:      c,
+					cancel: cancel,
+				}
+				actual, _ := p.sci.m.LoadOrStore(tableName, ctx)
+				<-actual.(*Ctx).c.Done()
+			}
+		}()
+		p.wg.Wait()
 		v, ok := GlobalTable.Load(tableName)
 		if !ok {
-			panic("table does not exists!")
+			panic("no table")
 		}
-
 		cols := v.(string)
 
 		rowCnt += uint64(len(sqls))
