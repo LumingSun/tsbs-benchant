@@ -34,7 +34,7 @@ func (t *kaiwudbTarget) TargetName() string {
 
 func (t *kaiwudbTarget) Serializer() serialize.PointSerializer {
 	return &Serializer{
-		tableMap:   map[string]struct{}{},
+		tableMap:   map[string]map[string]struct{}{},
 		superTable: map[string]*Table{},
 		tmpBuf:     &bytes.Buffer{},
 	}

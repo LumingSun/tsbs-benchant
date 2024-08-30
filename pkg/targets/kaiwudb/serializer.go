@@ -12,7 +12,7 @@ import (
 
 type Serializer struct {
 	tmpBuf     *bytes.Buffer
-	tableMap   map[string]struct{}
+	tableMap   map[string]map[string]struct{}
 	superTable map[string]*Table
 }
 
@@ -93,6 +93,38 @@ type tbNameRule struct {
 
 var tbRuleMap = map[string]*tbNameRule{
 	"cpu": {
+		tag:      "hostname",
+		nilValue: "host_null",
+	},
+	"diskio": {
+		tag:      "hostname",
+		nilValue: "host_null",
+	},
+	"disk": {
+		tag:      "hostname",
+		nilValue: "host_null",
+	},
+	"kernel": {
+		tag:      "hostname",
+		nilValue: "host_null",
+	},
+	"mem": {
+		tag:      "hostname",
+		nilValue: "host_null",
+	},
+	"net": {
+		tag:      "hostname",
+		nilValue: "host_null",
+	},
+	"nginx": {
+		tag:      "hostname",
+		nilValue: "host_null",
+	},
+	"postgresl": {
+		tag:      "hostname",
+		nilValue: "host_null",
+	},
+	"redis": {
 		tag:      "hostname",
 		nilValue: "host_null",
 	},
@@ -211,8 +243,9 @@ func (s *Serializer) Serialize(p *data.Point, w io.Writer) error {
 			table.tags[key] = nothing
 		}
 		s.superTable[superTable] = table
+		s.tableMap[superTable] = map[string]struct{}{}
 	}
-	_, exist = s.tableMap[subTable]
+	_, exist = s.tableMap[superTable][subTable]
 	// var repeatFieldValues []string
 	// TODO: not sure here
 	// column := len(fieldValues)
@@ -223,7 +256,7 @@ func (s *Serializer) Serialize(p *data.Point, w io.Writer) error {
 		fmt.Fprintf(w, "%c,%s,%s,(%d,%s,%s)\n", InsertMetricAndTag, superTable, subTable, p.TimestampInUnixMs(), strings.Join(fieldValues, ","), strings.Join(tagValues, ","))
 		// fmt.Fprintf(w, "%c,%s,%s,tags (%s)\n", CreateTable, superTable, subTable, strings.Join(tagValues, ","))
 		//fmt.Fprintf(w, "%c,%s,%s,(%s)values(%s)\n", InsertAttribute, superTable, subTable, trimString(s.superTable[superTable].tagsStr, '`'), strings.Join(tagValues, ","))
-		s.tableMap[subTable] = nothing
+		s.tableMap[superTable][subTable] = nothing
 	}
 
 	fmt.Fprintf(w, "%c,%s,%s,%d,(%d,%s,%s)\n", InsertMetric, superTable, subTable, len(fieldValues), p.TimestampInUnixMs(), strings.Join(fieldValues, ","), tagValues[0])
