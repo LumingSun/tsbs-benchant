@@ -93,7 +93,8 @@ func (ha *hypertableArr) Len() uint {
 func (ha *hypertableArr) Append(item data.LoadedPoint) {
 	that := item.Data.(*point)
 	if that.sqlType == InsertMetric {
-		ha.m[that.table+":"+that.device] = append(ha.m[that.table+":"+that.device], that.sql)
+		// ha.m[that.table+":"+that.device] = append(ha.m[that.table+":"+that.device], that.sql)
+		ha.m[that.table] = append(ha.m[that.table], that.sql)
 		ha.devices[that.device] = true
 		ha.totalMetric += uint64(that.fieldCount)
 		ha.cnt++
