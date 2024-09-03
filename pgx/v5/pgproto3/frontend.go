@@ -132,6 +132,14 @@ func (f *Frontend) SendBind(msg *Bind) {
 	}
 }
 
+func (f *Frontend) SendBindExec(msg *BindExec) {
+	//prevLen := len(f.wbuf)
+	f.wbuf = msg.Encode(f.wbuf)
+	//if f.tracer != nil {
+	//	f.tracer.traceBindExec('F', int32(len(f.wbuf)-prevLen), msg)
+	//}
+}
+
 // SendParse sends a Parse message to the backend (i.e. the server). The message is not guaranteed to be written until
 // Flush is called.
 func (f *Frontend) SendParse(msg *Parse) {
@@ -312,6 +320,7 @@ func (f *Frontend) Receive() (BackendMessage, error) {
 	default:
 		return nil, fmt.Errorf("unknown message type: %c", f.msgType)
 	}
+
 	err = msg.Decode(msgBody)
 	if err != nil {
 		return nil, err

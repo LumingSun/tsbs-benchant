@@ -900,7 +900,7 @@ optionLoop:
 		}
 
 		if !explicitPreparedStatement && mode == QueryExecModeCacheDescribe {
-			rows.resultReader = c.pgConn.ExecParams(ctx, sql, c.eqb.ParamValues, sd.ParamOIDs, c.eqb.ParamFormats, resultFormats)
+			rows.resultReader = c.pgConn.ExecParamsV2(ctx, sql, c.eqb.ParamValues, sd.ParamOIDs, c.eqb.ParamFormats, resultFormats)
 		} else {
 			rows.resultReader = c.pgConn.ExecPrepared(ctx, sd.Name, c.eqb.ParamValues, c.eqb.ParamFormats, resultFormats)
 		}

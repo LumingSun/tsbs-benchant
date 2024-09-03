@@ -1034,8 +1034,29 @@ func (pgConn *PgConn) ExecParams(ctx context.Context, sql string, paramValues []
 
 	pgConn.frontend.SendParse(&pgproto3.Parse{Query: sql, ParameterOIDs: paramOIDs})
 	pgConn.frontend.SendBind(&pgproto3.Bind{ParameterFormatCodes: paramFormats, Parameters: paramValues, ResultFormatCodes: resultFormats})
-
 	pgConn.execExtendedSuffix(result)
+
+	return result
+}
+
+func (pgConn *PgConn) ExecParamsV2(ctx context.Context, sql string, paramValues [][]byte, paramOIDs []uint32, paramFormats []int16, resultFormats []int16) *ResultReader {
+	result := pgConn.execExtendedPrefix(ctx, paramValues)
+	if result.closed {
+		return result
+	}
+
+	pgConn.frontend.SendParse(&pgproto3.Parse{Query: sql, ParameterOIDs: paramOIDs})
+	pgConn.frontend.SendBindExec(&pgproto3.BindExec{ParameterFormatCodes: paramFormats, Parameters: paramValues, ResultFormatCodes: resultFormats})
+	err := pgConn.frontend.Flush()
+	if err != nil {
+		pgConn.asyncClose()
+		result.concludeCommand(CommandTag{}, err)
+		pgConn.contextWatcher.Unwatch()
+		result.closed = true
+		pgConn.unlock()
+		return result
+	}
+	result.readUntilRowDescription()
 
 	return result
 }
