@@ -46,7 +46,7 @@ func (p *processorInsert) Init(proNum int, doLoad, _ bool) {
 	l := len(p.opts.Port)
 	idx := proNum % l
 
-	p._db, err = commonpool.GetConnection(p.opts.User, p.opts.Pass, p.opts.Host[idx], p.opts.Port[idx])
+	p._db, err = commonpool.GetConnection(p.opts.User, p.opts.Pass, p.opts.Host[idx], p.opts.Port[idx], 0)
 	if err != nil {
 		panic(err)
 	}

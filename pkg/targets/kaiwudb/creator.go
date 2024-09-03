@@ -23,7 +23,7 @@ var IOTPRE = []string{"readings", "diagnostics"}
 var DEVOPSPRE = []string{"cpu", "diskio", "disk", "kernel", "mem", "net", "nginx", "postgresl", "redis"}
 
 func (d *dbCreator) Init() {
-	db, err := commonpool.GetConnection(d.opts.User, d.opts.Pass, d.opts.Host[0], d.opts.Port[0])
+	db, err := commonpool.GetConnection(d.opts.User, d.opts.Pass, d.opts.Host[0], d.opts.Port[0], 0)
 	if err != nil {
 		panic(fmt.Sprintf("kaiwudb can not get connection %s", err.Error()))
 	}

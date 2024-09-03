@@ -15,11 +15,12 @@ type ConnectorPool struct {
 	user     string
 	password string
 	port     int
+	format   int
 	pool     pool.Pool
 }
 
-func NewConnectorPool(user string, password string, host string, port int) (*ConnectorPool, error) {
-	a := &ConnectorPool{user: user, password: password, host: host, port: port}
+func NewConnectorPool(user string, password string, host string, port int, format int) (*ConnectorPool, error) {
+	a := &ConnectorPool{user: user, password: password, host: host, port: port, format: format}
 	poolConfig := &pool.Config{
 		InitialCap:  1,
 		MaxCap:      10000,
@@ -39,7 +40,7 @@ func NewConnectorPool(user string, password string, host string, port int) (*Con
 func (a *ConnectorPool) factory() (interface{}, error) {
 	thread.Lock()
 	defer thread.Unlock()
-	url := fmt.Sprintf("dbname=defaultdb host=%s port=%d user=%s password=%s default_query_exec_mode=simple_protocol standard_conforming_strings=on client_encoding=UTF8", a.host, a.port, a.user, a.password)
+	url := fmt.Sprintf("dbname=defaultdb host=%s port=%d user=%s password=%s  pg_format=%d default_query_exec_mode=simple_protocol standard_conforming_strings=on client_encoding=UTF8", a.host, a.port, a.user, a.password, a.format)
 
 	return pgx.Connect(context.Background(), url)
 }
@@ -90,12 +91,12 @@ func (c *Conn) Put() error {
 	return c.pool.Put(nil)
 }
 
-func GetConnection(user string, password string, host string, port int) (*Conn, error) {
+func GetConnection(user string, password string, host string, port int, format int) (*Conn, error) {
 	p, exist := connectionMap.Load(user)
 	if exist {
 		connectionPool := p.(*ConnectorPool)
 		if !connectionPool.verifyPassword(password) {
-			newPool, err := NewConnectorPool(user, password, host, port)
+			newPool, err := NewConnectorPool(user, password, host, port, format)
 			if err != nil {
 				return nil, err
 			}
@@ -115,7 +116,7 @@ func GetConnection(user string, password string, host string, port int) (*Conn, 
 				return nil, err
 			}
 			if c == nil {
-				newPool, err := NewConnectorPool(user, password, host, port)
+				newPool, err := NewConnectorPool(user, password, host, port, format)
 				if err != nil {
 					return nil, err
 				}
@@ -131,7 +132,7 @@ func GetConnection(user string, password string, host string, port int) (*Conn, 
 			}, nil
 		}
 	} else {
-		newPool, err := NewConnectorPool(user, password, host, port)
+		newPool, err := NewConnectorPool(user, password, host, port, format)
 		if err != nil {
 			return nil, err
 		}
