@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 
 	"github.com/benchant/tsbs/pkg/targets"
@@ -107,7 +106,7 @@ func (p *processorInsert) ProcessBatch(b targets.Batch, doLoad bool) (metricCoun
 				c:      c,
 				cancel: cancel,
 			}
-			actual, _ := p.sci.m.LoadOrStore(row.device, ctx)
+			actual, _ := p.sci.m.LoadOrStore(row.table+row.device, ctx)
 
 			//check if table created
 			_, ok := GlobalTable.Load(row.table)
@@ -124,7 +123,7 @@ func (p *processorInsert) ProcessBatch(b targets.Batch, doLoad bool) (metricCoun
 					}
 
 					metricAndTagSql[row.table] = append(metricAndTagSql[row.table], row.sql)
-					GlobalTable.Store(row.device, nothing)
+					GlobalTable.Store(row.table+row.device, nothing)
 					actual.(*Ctx).cancel()
 					continue
 				}
@@ -145,106 +144,77 @@ func (p *processorInsert) ProcessBatch(b targets.Batch, doLoad bool) (metricCoun
 				panic(fmt.Sprintf("kaiwudb insert data failed,err :%s", err))
 			}
 			metricAndTagSql[row.table] = append(metricAndTagSql[row.table], row.sql)
-			GlobalTable.Store(row.device, nothing)
+			GlobalTable.Store(row.table+row.device, nothing)
 			actual.(*Ctx).cancel()
 		default:
 			panic("impossible")
 		}
 	}
 
-	// 同一张表的type 3数据合并执行，但是需要执行成功后再执行GlobalTable.Store(row.device, nothing)
-	/*
-		for tableName, sqls := range metricAndTagSql {
-			sql := "insert into " + tableName + " values " + strings.Join(sqls, " , ")
-			fmt.Println(sql)
-			_, err := p._db.Connection.Exec(context.Background(), sql)
-			if err != nil {
-				panic(fmt.Sprintf("kaiwudb insert data failed,err :%s", err))
-			}
-		}
-	*/
-
-	// make sure first rerord inserted into devices
+	// make sure table created and first rerord inserted into devices
 	p.buf.Reset()
-	p.wg.Add(len(batches.devices))
-	for deviceName := range batches.devices {
-		device := deviceName
-		// fmt.Println("device: ", device)
-		go func() {
-			defer p.wg.Done()
-			_, ok := GlobalTable.Load(device)
-			if ok {
-				return
-			}
-			v, ok := p.sci.m.Load(device)
-			if ok {
-				<-v.(*Ctx).c.Done()
-				return
-			}
-			c, cancel := context.WithCancel(context.Background())
-			ctx := &Ctx{
-				c:      c,
-				cancel: cancel,
-			}
-			actual, _ := p.sci.m.LoadOrStore(device, ctx)
-			<-actual.(*Ctx).c.Done()
-			return
-		}()
-	}
-	p.wg.Wait()
-
-	/** type 1 sample:
-	 * 1,cpu,host_0,11,(1451606400000,58,2,24,61,22,63,6,44,80,38,'host_0')
-	 */
-	header := false
-	for name, sqls := range batches.m {
-		tableName := strings.Split(name, ":")[0]
-		p.wg.Add(1)
-		go func() {
-			defer p.wg.Done()
-			v, ok := GlobalTable.Load(tableName)
-			if !ok {
-				v, ok = p.sci.m.Load(tableName)
+	p.wg.Add(len(batches.devices) * len(batches.m))
+	for name := range batches.m {
+		tableName := name
+		for deviceName := range batches.devices {
+			device := deviceName
+			// fmt.Println("device: ", device)
+			go func() {
+				defer p.wg.Done()
+				_, ok := GlobalTable.Load(tableName + device)
+				if ok {
+					return
+				}
+				v, ok := p.sci.m.Load(tableName + device)
 				if ok {
 					<-v.(*Ctx).c.Done()
+					return
 				}
 				c, cancel := context.WithCancel(context.Background())
 				ctx := &Ctx{
 					c:      c,
 					cancel: cancel,
 				}
-				actual, _ := p.sci.m.LoadOrStore(tableName, ctx)
+				actual, _ := p.sci.m.LoadOrStore(tableName+device, ctx)
 				<-actual.(*Ctx).c.Done()
-			}
-		}()
-		p.wg.Wait()
+				return
+			}()
+		}
+	}
+	p.wg.Wait()
+
+	/** type 1 sample:
+	 * 1,cpu,host_0,11,(1451606400000,58,2,24,61,22,63,6,44,80,38,'host_0')
+	 */
+	for name, sqls := range batches.m {
+		// tableName := strings.Split(name, ":")[0]
+		tableName := name
+
 		v, ok := GlobalTable.Load(tableName)
 		if !ok {
-			panic("no table")
+			panic("table does not exists!")
 		}
+
 		cols := v.(string)
 
 		rowCnt += uint64(len(sqls))
-		if !header {
-			p.buf.WriteString("insert into ")
-			p.buf.WriteString(tableName + cols)
-			p.buf.WriteString(" values")
-			header = true
-		}
-
+		p.buf.WriteString("insert into ")
+		p.buf.WriteString(tableName + cols)
+		p.buf.WriteString(" values")
 		for i := 0; i < len(sqls); i++ {
 			p.buf.WriteString(sqls[i])
-			p.buf.WriteString(" , ")
+			if i < len(sqls)-1 {
+				p.buf.WriteString(" , ")
+			}
 		}
+		sql := p.buf.String()
+		// fmt.Println(sql)
+		_, err := p._db.Connection.Exec(context.Background(), sql)
+		if err != nil {
+			panic(fmt.Sprintf("kaiwudb insert data failed,err :%s", err))
+		}
+		p.buf.Reset()
 	}
-	sql := p.buf.String()
-	// fmt.Println(sql)
-	_, err := p._db.Connection.Exec(context.Background(), sql)
-	if err != nil {
-		panic(fmt.Sprintf("kaiwudb insert data failed,err :%s", err))
-	}
-	p.buf.Reset()
-	// }
 
 	batches.Reset()
 	return metricCnt, rowCnt
@@ -256,45 +226,3 @@ func (p *processorInsert) Close(doLoad bool) {
 		//p._db1_0.Put()
 	}
 }
-
-// func (p *processorInsert) createDeviceAndAttribute(createSql []*point) int {
-// 	var deviceNums int = 0
-// 	for _, row := range createSql {
-// 		deviceNums++
-// 		switch row.sqlType {
-// 		case CreateTemplateTable:
-// 			c, cancel := context.WithCancel(context.Background())
-// 			ctx := &Ctx{
-// 				c:      c,
-// 				cancel: cancel,
-// 			}
-// 			actual, _ := p.sci.m.LoadOrStore(row.table, ctx)
-// 			sql := fmt.Sprintf("create table %s.%s %s", p.opts.DBName, row.table, row.sql)
-// 			//fmt.Println(sql)
-// 			_, err := p._db.Connection.Exec(ctx.c, sql)
-// 			if err != nil && !strings.Contains(err.Error(), "already exists") {
-// 				panic(fmt.Sprintf("kaiwudb create device failed,err :%s", err))
-// 			}
-// 			actual.(*Ctx).cancel()
-// 		case CreateTable:
-// 			c, cancel := context.WithCancel(context.Background())
-// 			ctx := &Ctx{
-// 				c:      c,
-// 				cancel: cancel,
-// 			}
-// 			actual, _ := p.sci.m.LoadOrStore(row.device, ctx)
-// 			sql := fmt.Sprintf("insert into %s.cpu values %s", p.dbName, row.sql)
-// 			//fmt.Println(sql)
-// 			_, err := p._db.Connection.Exec(context.Background(), sql)
-// 			if err != nil {
-// 				panic(fmt.Sprintf("kaiwudb insert data failed,err :%s", err))
-// 			}
-// 			actual.(*Ctx).cancel()
-// 			continue
-// 		default:
-// 			panic("impossible")
-// 		}
-// 	}
-// 	// fmt.Printf("device numbers : %d\n", deviceNums)
-// 	return deviceNums
-// }
