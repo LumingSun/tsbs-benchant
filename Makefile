@@ -1,6 +1,6 @@
 # Go parameters
 GOCMD=GO111MODULE=on go
-GOBUILD=$(GOCMD) build
+GOBUILD=$(GOCMD) build# -gcflags "all=-N -l"
 GOINSTALL=$(GOCMD) install
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
@@ -12,37 +12,26 @@ GOFMT=$(GOCMD) fmt
 
 all: generators loaders runners
 
-generators: tsbs_generate_data \
-			tsbs_generate_queries
+# generators: tsbs_generate_data \
+# 			tsbs_generate_queries
 
 loaders: tsbs_load \
-		 tsbs_load_akumuli \
-		 tsbs_load_cassandra \
-		 tsbs_load_clickhouse \
-		 tsbs_load_cratedb \
-		 tsbs_load_influx \
- 		 tsbs_load_mongo \
- 		 tsbs_load_prometheus \
- 		 tsbs_load_siridb \
- 		 tsbs_load_timescaledb \
- 		 tsbs_load_victoriametrics \
- 		 tsbs_load_questdb \
-		 tsbs_load_iotdb \
 		 tsbs_load_kaiwudb
+		 
 
-runners: tsbs_run_queries_akumuli \
-		 tsbs_run_queries_cassandra \
-		 tsbs_run_queries_clickhouse \
-		 tsbs_run_queries_cratedb \
-		 tsbs_run_queries_influx \
-		 tsbs_run_queries_mongo \
-		 tsbs_run_queries_siridb \
-		 tsbs_run_queries_timescaledb \
-		 tsbs_run_queries_timestream \
-		 tsbs_run_queries_victoriametrics \
-		 tsbs_run_queries_questdb \
-		 tsbs_run_queries_iotdb \
-		 tsbs_run_queries_kaiwudb
+# runners: tsbs_run_queries_akumuli \
+# 		 tsbs_run_queries_cassandra \
+# 		 tsbs_run_queries_clickhouse \
+# 		 tsbs_run_queries_cratedb \
+# 		 tsbs_run_queries_influx \
+# 		 tsbs_run_queries_mongo \
+# 		 tsbs_run_queries_siridb \
+# 		 tsbs_run_queries_timescaledb \
+# 		 tsbs_run_queries_timestream \
+# 		 tsbs_run_queries_victoriametrics \
+# 		 tsbs_run_queries_questdb \
+# 		 tsbs_run_queries_iotdb \
+# 		 tsbs_run_queries_kaiwudb
 
 test:
 	$(GOTEST) -v ./...
