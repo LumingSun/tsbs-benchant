@@ -46,7 +46,7 @@ func InitQueryFactories(config *config.QueryGeneratorConfig) map[string]interfac
 		BasicPathLevel: 0,
 	}
 	if config.Format == constants.FormatKaiwuDB {
-		if config.Use == "cpu-only" {
+		if config.Use == "cpu-only" || config.Use == "devops" {
 			factories[constants.FormatKaiwuDB] = &kaiwudb.BaseGenerator{
 				CPUDBName: config.DbName,
 			}
