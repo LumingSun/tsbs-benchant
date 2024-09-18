@@ -38,7 +38,7 @@ func initProgramOptions() (*kaiwudb.LoadingOptions, load.BenchmarkRunner, *load.
 	opts.Workers = viper.GetInt("workers")
 	opts.DoCreate = viper.GetBool("do-create-db")
 	//todo: kaiwudb连接可配参数
-	loaderConf.HashWorkers = true
+	loaderConf.HashWorkers = false
 	loaderConf.NoFlowControl = true
 	loaderConf.ChannelCapacity = 50
 	loaderConf.DBName = opts.DBName

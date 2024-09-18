@@ -2,7 +2,6 @@ package kaiwudb
 
 import (
 	"bytes"
-	"hash/fnv"
 	"sync"
 
 	"github.com/benchant/tsbs/pkg/data"
@@ -28,34 +27,11 @@ type indexer struct {
 
 func (i *indexer) GetIndex(item data.LoadedPoint) uint {
 	p := item.Data.(*point)
-	var nodeID uint
 	if p.sqlType != InsertMetric {
 		return 0
 	}
-	nodeID, exist := i.tmp[p.tag]
-	if !exist && i.Nodes > 1 {
-		pt := make([]byte, 31)
-		copy(pt, []byte(p.tag))
 
-		hashPartitionNum := 10 * i.Nodes // partitionBalanceNumber * int64(len(nodeStatus.Nodes))
-		hashPartitionSize := 65535 / hashPartitionNum
-		fnv32 := fnv.New32()
-		_, err := fnv32.Write(pt)
-		if err != nil {
-			return 0
-		}
-		hash := fnv32.Sum32() % 65535
-		hashPartitionID := hash / uint32(hashPartitionSize)
-		if hashPartitionID == uint32(hashPartitionNum) {
-			hashPartitionID--
-		}
-		i.tmp[p.tag] = uint(hashPartitionID % uint32(i.Nodes))
-		nodeID = uint(hashPartitionID % uint32(i.Nodes))
-	} else {
-		nodeID = 0
-	}
-
-	targetChans := &(i.node2Chan[nodeID])
+	targetChans := &(i.node2Chan[0])
 	index := uint(targetChans.chans[targetChans.idx])
 	targetChans.idx++
 	if targetChans.idx == len(targetChans.chans) {
