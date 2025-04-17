@@ -4,17 +4,29 @@ package main
 
 import (
 	"fmt"
-	"github.com/timescale/tsbs/pkg/query/config"
+	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/blagojts/viper"
 	"github.com/spf13/pflag"
+	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/databases/akumuli"
+	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/databases/cassandra"
+	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/databases/clickhouse"
+	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/databases/cratedb"
+	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/databases/influx"
+	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/databases/kwdb"
+	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/databases/mongo"
+	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/databases/questdb"
+	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/databases/siridb"
+	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/databases/timescaledb"
+	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/databases/timestream"
+	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/databases/victoriametrics"
 	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/uses/devops"
 	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/uses/iot"
-	"github.com/timescale/tsbs/cmd/tsbs_generate_queries/utils"
-	"github.com/timescale/tsbs/internal/inputs"
-	internalUtils "github.com/timescale/tsbs/internal/utils"
+	"github.com/timescale/tsbs/internal/utils"
+	"github.com/timescale/tsbs/pkg/query"
 )
 
 var useCaseMatrix = map[string]map[string]utils.QueryFillerMaker{
@@ -98,3 +110,27 @@ func main() {
 		fmt.Printf("error: %v\n", err)
 	}
 }
+
+	supportedFormats := []string{"akumuli", "cassandra", "clickhouse", "cratedb", "influx", "kwdb", "mongo", "questdb", "siridb", "timescaledb", "timestream", "victoriametrics"}
+	supportedUseCases := []string{devops.UseCase, iot.UseCase}
+
+	\t	generator, err = influx.NewDevops(core, generatorConf)
+	panicIfErr(err)
+	case "victoriametrics":
+		generator, err = victoriametrics.NewDevops(core, generatorConf)
+		panicIfErr(err)
+	case "kwdb": // Add KWDB case
+		generator, err = kwdb.NewDevops(start, end, scale)
+		panicIfErr(err)
+	default:
+		panic(fmt.Sprintf("unsupported format: %s", format))
+	}
+	case "victoriametrics":
+		generator, err = influx.NewIoT(core, generatorConf)
+		panicIfErr(err)
+	// case "kwdb": // Add KWDB IoT case if/when implemented
+	// 	generator, err = kwdb.NewIoT(start, end, scale)
+	// 	panicIfErr(err)
+	default:
+		panic(fmt.Sprintf("unsupported format: %s", format))
+	}
